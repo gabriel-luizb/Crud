@@ -1,0 +1,265 @@
+Livro.java
+
+public class Livro {
+    private String titulo;
+    private String autor;
+    private String isbn;
+    private String genero;
+
+    public Livro(String titulo, String autor, String isbn, String genero) {
+        this.titulo = titulo;
+        this.autor = autor;
+        this.isbn = isbn;
+        this.genero = genero;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public String getAutor() {
+        return autor;
+    }
+
+    public void setAutor(String autor) {
+        this.autor = autor;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public String getGenero() {
+        return genero;
+    }
+
+    public void setGenero(String genero) {
+        this.genero = genero;
+    }
+
+    @Override
+    public String toString() {
+        return titulo + "," + autor + "," + isbn + "," + genero;
+    }
+
+    public String toDisplayString() {
+        return "Título: " + titulo + ", Autor: " + autor + ", ISBN: " + isbn + ", Gênero: " + genero;
+    }
+}
+_______________________________________________________________________________________________________________________________________________________________-
+
+Menu.java
+
+import java.util.Scanner;
+
+public class Menu {
+    public int exibirMenuEObterOpcao(Scanner scanner) {
+        System.out.println("\nMenu:");
+        System.out.println("1. Criar Livro");
+        System.out.println("2. Ler Livros");
+        System.out.println("3. Atualizar Livro");
+        System.out.println("4. Deletar Livro");
+        System.out.println("5. Sair");
+        System.out.print("Escolha uma opção: ");
+        return scanner.nextInt();
+    }
+}
+_______________________________________________________________________________________________________________________________________________________________________
+
+SistemaGerenciamentoLivros.java
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class SistemaGerenciamentoLivros {
+    private static final String ARQUIVO_DADOS = "livros.txt";
+    private static List<Livro> livros = new ArrayList<>();
+
+    public static void main(String[] args) {
+        carregarDadosDoArquivo();
+
+        Scanner scanner = new Scanner(System.in);
+        Menu menu = new Menu();
+
+        while (true) {
+            int opcao = menu.exibirMenuEObterOpcao(scanner);
+            scanner.nextLine(); // Limpar buffer
+
+            switch (opcao) {
+                case 1:
+                    criarLivro(scanner);
+                    break;
+                case 2:
+                    lerLivros(scanner);
+                    break;
+                case 3:
+                    atualizarLivro(scanner);
+                    break;
+                case 4:
+                    deletarLivro(scanner);
+                    break;
+                case 5:
+                    System.out.println("Saindo do sistema...");
+                    salvarDadosNoArquivo();
+                    System.exit(0);
+                default:
+                    System.out.println("Opção inválida. Tente novamente.");
+            }
+        }
+    }
+
+    private static void carregarDadosDoArquivo() {
+        try (FileReader reader = new FileReader(ARQUIVO_DADOS)) {
+            Scanner arquivoScanner = new Scanner(reader);
+            while (arquivoScanner.hasNextLine()) {
+                String linha = arquivoScanner.nextLine();
+                String[] dados = linha.split(",");
+                Livro livro = new Livro(dados[0], dados[1], dados[2], dados[3]);
+                livros.add(livro);
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao carregar dados do arquivo: " + e.getMessage());
+        }
+    }
+
+    private static void salvarDadosNoArquivo() {
+        try (FileWriter writer = new FileWriter(ARQUIVO_DADOS)) {
+            for (Livro livro : livros) {
+                writer.write(livro.toString() + "\n");
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar dados no arquivo: " + e.getMessage());
+        }
+    }
+
+    private static void criarLivro(Scanner scanner) {
+        System.out.println("**Criando um novo livro:**");
+
+        System.out.print("Título: ");
+        String titulo = scanner.nextLine();
+
+        System.out.print("Autor: ");
+        String autor = scanner.nextLine();
+
+        System.out.print("ISBN: ");
+        String isbn = scanner.nextLine();
+
+        System.out.print("Gênero: ");
+        String genero = scanner.nextLine();
+
+        Livro livro = new Livro(titulo, autor, isbn, genero);
+        livros.add(livro);
+
+        System.out.println("Livro salvo com sucesso!");
+
+        salvarDadosNoArquivo();
+    }
+
+    private static void lerLivros(Scanner scanner) {
+        if (livros.isEmpty()) {
+            System.out.println("Não há livros cadastrados.");
+            return;
+        }
+
+        System.out.println("**Lista de Livros:**");
+
+        System.out.print("Filtrar por gênero (opcional): ");
+        String filtroGenero = scanner.nextLine().trim();
+
+        for (Livro livro : livros) {
+            if (filtroGenero.isEmpty() || filtroGenero.equalsIgnoreCase(livro.getGenero())) {
+                System.out.println(livro.toDisplayString());
+            }
+        }
+    }
+
+    private static void atualizarLivro(Scanner scanner) {
+        if (livros.isEmpty()) {
+            System.out.println("Não há livros cadastrados para atualizar.");
+            return;
+        }
+
+        mostrarLivrosComNumeracao();
+
+        System.out.print("Digite o número do livro a ser atualizado: ");
+        int indiceLivro = scanner.nextInt() - 1;
+        scanner.nextLine(); // Limpar buffer
+
+        if (indiceLivro < 0 || indiceLivro >= livros.size()) {
+            System.out.println("Índice inválido. Tente novamente.");
+            return;
+        }
+
+        Livro livro = livros.get(indiceLivro);
+
+        System.out.println("**Atualizando livro:**");
+
+        System.out.print("Novo título (vazio para manter atual): ");
+        String novoTitulo = scanner.nextLine().trim();
+        if (!novoTitulo.isEmpty()) {
+            livro.setTitulo(novoTitulo);
+        }
+
+        System.out.print("Novo autor (vazio para manter atual): ");
+        String novoAutor = scanner.nextLine().trim();
+        if (!novoAutor.isEmpty()) {
+            livro.setAutor(novoAutor);
+        }
+
+        System.out.print("Novo ISBN (vazio para manter atual): ");
+        String novoIsbn = scanner.nextLine().trim();
+        if (!novoIsbn.isEmpty()) {
+            livro.setIsbn(novoIsbn);
+        }
+
+        System.out.print("Novo gênero (vazio para manter atual): ");
+        String novoGenero = scanner.nextLine().trim();
+        if (!novoGenero.isEmpty()) {
+            livro.setGenero(novoGenero);
+        }
+
+        System.out.println("Livro atualizado com sucesso!");
+
+        salvarDadosNoArquivo();
+    }
+
+    private static void deletarLivro(Scanner scanner) {
+        if (livros.isEmpty()) {
+            System.out.println("Não há livros cadastrados para deletar.");
+            return;
+        }
+
+        mostrarLivrosComNumeracao();
+
+        System.out.print("Digite o número do livro a ser deletado: ");
+        int indiceLivro = scanner.nextInt() - 1;
+        scanner.nextLine(); // Limpar buffer
+
+        if (indiceLivro < 0 || indiceLivro >= livros.size()) {
+            System.out.println("Índice inválido. Tente novamente.");
+            return;
+        }
+
+        livros.remove(indiceLivro);
+        System.out.println("Livro deletado com sucesso!");
+
+        salvarDadosNoArquivo();
+    }
+
+    private static void mostrarLivrosComNumeracao() {
+        for (int i = 0; i < livros.size(); i++) {
+            System.out.println((i + 1) + ". " + livros.get(i).toDisplayString());
+        }
+    }
+}
+_____________________________________________________________________________________________________________________________________________
